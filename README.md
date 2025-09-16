@@ -10,7 +10,7 @@ Run it directly with Python or via Docker.
 ## Features
 
 * ✅ Uses only **stable** models from [g4f (gpt4free)](https://github.com/xtekky/gpt4free)
-* ✅ Fetches the **latest working models daily** from [g4f-working](https://raw.githubusercontent.com/maruf009sultan/g4f-working/refs/heads/main/working/working_results.txt)
+* ✅ Always fetches the **latest working models** from [g4f-working](https://raw.githubusercontent.com/maruf009sultan/g4f-working/refs/heads/main/working/working_results.txt)
 * ✅ Provides **OpenAI-compatible endpoints** (`/v1/models`, `/v1/chat/completions`)
 * ✅ Works with existing OpenAI clients/libraries (`openai`, `requests`, etc.)
 * ✅ Run locally with **Python** or **Docker**
