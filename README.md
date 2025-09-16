@@ -25,7 +25,7 @@ Run it directly with Python or via Docker.
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/unlimitedai2025-byte/g4f-proxy-stable.git
+git clone https://github.com/0600011/g4f-proxy-stable.git
 cd g4f-proxy-stable
 ```
 
