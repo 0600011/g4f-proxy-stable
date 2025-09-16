@@ -11,4 +11,4 @@ RUN chown -R appuser:appuser /app
 USER appuser
 ENV PORT=8001
 EXPOSE 8001
-CMD ["sh", "-c", "uvicorn apiserver:app --host 127.0.0.1 --port ${PORT:-8001} --workers 1"]
+CMD ["sh", "-c", "uvicorn apiserver:app --host 0.0.0.0 --port ${PORT:-8001} --workers 1"]
