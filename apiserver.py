@@ -78,7 +78,12 @@ def grabText(chunk):
 MODEL_MAP, MODELS_LIST = loadModels()
 @app.get("/v1/models")
 def models():
-    return {"object": "list", "data": MODELS_LIST}
+    import json
+    # インデント付きでJSON整形（ソートせずにそのまま保持）
+    import json
+    from fastapi.responses import Response
+    formatted = json.dumps({"object": "list", "data": MODELS_LIST}, ensure_ascii=False, indent=2)
+    return Response(content=formatted, media_type="application/json; charset=utf-8")
 @app.post("/v1/chat/completions")
 async def chatCompletions(req: Request):
     data = await req.json()
@@ -138,28 +143,25 @@ async def chatCompletions(req: Request):
         try:
             print("[DEBUG] Non-stream request received:", data)
             import asyncio
-            if asyncio.get_event_loop().is_running():
-                print("[DEBUG] Event loop already running — switching to nested loop safe execution")
-                import threading
-                result_container = {}
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
 
-                def run_in_thread():
-                    try:
-                        result_container['resp'] = g4f.ChatCompletion.create(
-                            model=model, provider=provObj, messages=messages, stream=False, **extra
-                        )
-                    except Exception as ex:
-                        result_container['error'] = ex
+            async def run_async():
+                return await asyncio.to_thread(
+                    g4f.ChatCompletion.create,
+                    model=model, provider=provObj, messages=messages, stream=False, **extra
+                )
 
-                t = threading.Thread(target=run_in_thread)
-                t.start()
-                t.join()
-
-                if 'error' in result_container:
-                    raise result_container['error']
-                resp = result_container['resp']
+            if loop and loop.is_running():
+                print("[DEBUG] Running in existing event loop (concurrent safe mode)")
+                resp = await run_async()
             else:
-                resp = g4f.ChatCompletion.create(model=model, provider=provObj, messages=messages, stream=False, **extra)
+                print("[DEBUG] Starting new event loop for request")
+                resp = asyncio.run(run_async())
+
             txt = grabText(resp)
             response_json = {
                 "id": f"chatcmpl-{random.randint(1, 9999999)}",
