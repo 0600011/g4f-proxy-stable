@@ -90,7 +90,7 @@ client = OpenAI(base_url="http://127.0.0.1:8001/v1", api_key="not-needed")
 
 chat = client.chat.completions.create(
     model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello from g4f-proxy-stable!"}]
+    messages=[{"role": "user", "content": "Hello!"}]
 )
 
 print(chat.choices[0].message.content)
