@@ -117,5 +117,3 @@ print(chat.choices[0].message.content)
 * [g4f-working](https://github.com/maruf009sultan/g4f-working)
 
 ---
-
-リンクの出し方は「小さく表示」でもうまくいってるけど、大きく **\[日本語はこちら]** とかにしたいですか？
