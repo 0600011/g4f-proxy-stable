@@ -2,7 +2,7 @@
 
 # g4f-proxy-stable
 
-<sub>[English](https://github.com/unlimitedai2025-byte/g4f-proxy-stable/blob/main/README.md)</sub>
+<sub>[English](https://github.com/0600011/g4f-proxy-stable/blob/main/README.md)</sub>
 
 **安定した g4f モデルのみ**を利用し、**OpenAI 互換 API** を提供する完全無料・無制限のローカルサーバーです。
 Python または Docker で簡単に実行できます。
