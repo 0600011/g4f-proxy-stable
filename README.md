@@ -115,5 +115,3 @@ print(chat.choices[0].message.content)
 * [g4f-working](https://github.com/maruf009sultan/g4f-working)
 
 ---
-
-👉 「Features」のところに入れる形で大丈夫？ それとも「仕組み (How it works)」みたいなセクションを追加した方がいいですか？
