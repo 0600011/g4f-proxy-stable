@@ -25,7 +25,7 @@ Python または Docker で簡単に実行できます。
 リポジトリをクローンし、依存関係をインストールしてサーバーを起動します。
 
 ```
-git clone https://github.com/unlimitedai2025-byte/g4f-proxy-stable.git
+git clone https://github.com/0600011/g4f-proxy-stable.git
 cd g4f-proxy-stable
 pip install -r requirements.txt
 python apiserver.py
