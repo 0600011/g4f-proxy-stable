@@ -2,17 +2,16 @@ import sys, subprocess, importlib
 
 required_packages = ["fastapi", "uvicorn", "requests", "g4f"]
 
-for pkg in required_packages:
-    try:
+try:
+    for pkg in required_packages:
         importlib.import_module(pkg)
-    except ImportError:
-        print(f"[INFO] インストール中: {pkg}")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
-        except subprocess.CalledProcessError as e:
-            print(f"[ERROR] {pkg} のインストールに失敗しました: {e}")
-            print("`pip install fastapi uvicorn requests g4f` を実行して下さい。")
-            sys.exit(1)
+except ImportError:
+    print(f"[INFO] Installing dependencies from requirements.txt")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Failed to install dependencies: {e}")
+        sys.exit(1)
 
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -154,5 +153,14 @@ async def chatCompletions(req: Request):
             return JSONResponse({"error": str(e)}, status_code=500)
 
 if __name__ == "__main__":
-    import os
-    uvicorn.run(app, host="127.0.0.1", port=int(os.getenv("PORT", 8001)))
+    import os, sys
+    host_bind = "127.0.0.1" if sys.stdin.isatty() else "0.0.0.0"
+    uvicorn.run(
+        app,
+        host=host_bind,
+        port=int(os.getenv("PORT", 8001)),
+        timeout_keep_alive=30,
+        log_level="debug",
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    )
