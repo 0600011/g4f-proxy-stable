@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  g4f-proxy:
+    build: .
+    image: g4f-proxy:latest
+    container_name: g4f-proxy
+    environment:
+      - PORT=${PORT}
+    ports:
+      - "${PORT}:${PORT}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/v1/models"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
