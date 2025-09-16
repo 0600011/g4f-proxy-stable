@@ -1,27 +1,20 @@
 import sys, subprocess, importlib
-
 required_packages = ["fastapi", "uvicorn", "requests", "g4f"]
-
 try:
     for pkg in required_packages:
         importlib.import_module(pkg)
 except ImportError:
-    print(f"[INFO] Installing dependencies from requirements.txt")
+    print("[INFO] Installing dependencies from requirements.txt")
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
     except subprocess.CalledProcessError as e:
         print(f"[ERROR] Failed to install dependencies: {e}")
         sys.exit(1)
-
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 import json, random, requests, g4f, uvicorn
-
 TXT_URL = "https://raw.githubusercontent.com/maruf009sultan/g4f-working/refs/heads/main/working/working_results.txt"
-
 app = FastAPI()
-
-# モデル取得
 def loadModels():
     try:
         lines = requests.get(TXT_URL).text.strip().splitlines()
@@ -47,14 +40,11 @@ def loadModels():
                 "permission": []
             })
     return mMap, mList
-
-# プロバイダー取得
 def getProv(name):
     try:
         return getattr(g4f.Provider, name)
     except:
         return name
-
 def grabText(chunk):
     try:
         if chunk is None:
@@ -85,13 +75,10 @@ def grabText(chunk):
         return str(chunk)
     except:
         return str(chunk) if chunk is not None else ""
-
 MODEL_MAP, MODELS_LIST = loadModels()
-
 @app.get("/v1/models")
 def models():
     return {"object": "list", "data": MODELS_LIST}
-
 @app.post("/v1/chat/completions")
 async def chatCompletions(req: Request):
     data = await req.json()
@@ -104,33 +91,44 @@ async def chatCompletions(req: Request):
     provObj = getProv(prov)
     extra = {}
     for k in ("temperature", "max_tokens", "stop", "stream"):
-        if k in data:
+        if k in data and k != "stream":
             extra[k] = data[k]
     if isStream:
         def streamGen():
             try:
                 res = g4f.ChatCompletion.create(model=model, provider=provObj, messages=messages, stream=True, **extra)
-                count = 0
                 for ch in res:
                     txt = grabText(ch)
-                    if not txt:
-                        continue
-                    count += 1
+                    if txt is None:
+                        txt = ""
                     yield "data: " + json.dumps({
-                        "id": f"chatcmpl-{random.randint(1,9999999)}-{count}",
+                        "choices": [{"index": 0, "delta": {"role": "assistant", "content": txt}, "logprobs": None, "finish_reason": None}],
+                        "id": f"chatcmpl-{random.randint(1,9999999)}",
                         "object": "chat.completion.chunk",
+                        "created": int(random.randint(1_600_000_000, 1_900_000_000)),
                         "model": model,
-                        "choices": [{"delta": {"content": txt}, "index": 0}]
+                        "system_fingerprint": None
                     }, ensure_ascii=False) + "\n\n"
-                yield "data: " + json.dumps({
-                    "id": f"chatcmpl-{random.randint(1,9999999)}-final",
-                    "object": "chat.completion",
-                    "model": model,
-                    "choices": [{"delta": {}, "index": 0, "finish_reason": "stop"}]
-                }, ensure_ascii=False) + "\n\n"
                 yield "data: [DONE]\n\n"
             except Exception as e:
-                yield "data: " + json.dumps({"error": str(e)}, ensure_ascii=False) + "\n\n"
+                import traceback, sys
+                err_str = "".join(traceback.format_exception(*sys.exc_info()))
+                print("[STREAM ERROR]", err_str)
+                # ストリームモードのエラーもOpenAI SSE互換形式で返す
+                yield "data: " + json.dumps({
+                    "choices": [{
+                        "index": 0,
+                        "delta": {"role": "assistant", "content": f"[ERROR] {str(e)}"},
+                        "logprobs": None,
+                        "finish_reason": "error"
+                    }],
+                    "id": f"chatcmpl-{random.randint(1,9999999)}",
+                    "object": "chat.completion.chunk",
+                    "created": int(random.randint(1_600_000_000, 1_900_000_000)),
+                    "model": model,
+                    "system_fingerprint": None
+                }, ensure_ascii=False) + "\n\n"
+                yield "data: [DONE]\n\n"
         return StreamingResponse(streamGen(), media_type="text/event-stream", headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
@@ -138,23 +136,68 @@ async def chatCompletions(req: Request):
         })
     else:
         try:
-            resp = g4f.ChatCompletion.create(model=model, provider=provObj, messages=messages, stream=False, **extra)
-            txt = grabText(resp)
-            return JSONResponse({
-                "id": f"g4f-{random.randint(1, 9999999)}",
-                "object": "chat.completion",
-                "choices": [{
-                    "message": {"role": "assistant", "content": txt},
-                    "finish_reason": "stop",
-                    "index": 0
-                }]
-            })
-        except Exception as e:
-            return JSONResponse({"error": str(e)}, status_code=500)
+            print("[DEBUG] Non-stream request received:", data)
+            import asyncio
+            if asyncio.get_event_loop().is_running():
+                print("[DEBUG] Event loop already running — switching to nested loop safe execution")
+                import threading
+                result_container = {}
 
+                def run_in_thread():
+                    try:
+                        result_container['resp'] = g4f.ChatCompletion.create(
+                            model=model, provider=provObj, messages=messages, stream=False, **extra
+                        )
+                    except Exception as ex:
+                        result_container['error'] = ex
+
+                t = threading.Thread(target=run_in_thread)
+                t.start()
+                t.join()
+
+                if 'error' in result_container:
+                    raise result_container['error']
+                resp = result_container['resp']
+            else:
+                resp = g4f.ChatCompletion.create(model=model, provider=provObj, messages=messages, stream=False, **extra)
+            txt = grabText(resp)
+            response_json = {
+                "id": f"chatcmpl-{random.randint(1, 9999999)}",
+                "object": "chat.completion",
+                "created": int(random.randint(1_600_000_000, 1_900_000_000)),
+                "model": model,
+                "system_fingerprint": None,
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": txt},
+                    "logprobs": None,
+                    "finish_reason": "stop"
+                }]
+            }
+            print("[DEBUG] Non-stream response:", response_json)
+            return response_json
+        except Exception as e:
+            import traceback, sys
+            err_str = "".join(traceback.format_exception(*sys.exc_info()))
+            print("[NON-STREAM ERROR]", err_str)
+            error_json = {
+                "id": f"chatcmpl-{random.randint(1, 9999999)}",
+                "object": "chat.completion",
+                "created": int(random.randint(1_600_000_000, 1_900_000_000)),
+                "model": model,
+                "system_fingerprint": None,
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": f"[ERROR] {str(e)}"},
+                    "logprobs": None,
+                    "finish_reason": "error"
+                }]
+            }
+            print("[DEBUG] Non-stream error response:", error_json)
+            return error_json
 if __name__ == "__main__":
     import os, sys
-    host_bind = "127.0.0.1" if sys.stdin.isatty() else "0.0.0.0"
+    host_bind = "0.0.0.0"
     uvicorn.run(
         app,
         host=host_bind,
