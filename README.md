@@ -21,16 +21,22 @@ Run it directly with Python or via Docker.
 
 ### 1. Clone the repo
 
-git clone [https://github.com/yourname/g4f-proxy-stable.git](https://github.com/yourname/g4f-proxy-stable.git)
+```bash
+git clone https://github.com/unlimitedai2025-byte/g4f-proxy-stable.git
 cd g4f-proxy-stable
+```
 
 ### 2. Install dependencies
 
+```bash
 pip install -r requirements.txt
+```
 
 ### 3. Start the server
 
+```bash
 python apiserver.py
+```
 
 By default, it runs on **[http://127.0.0.1:8001](http://127.0.0.1:8001)**
 
@@ -40,11 +46,15 @@ By default, it runs on **[http://127.0.0.1:8001](http://127.0.0.1:8001)**
 
 ### Pull image from Docker Hub
 
-docker pull 060001a/g4f-stable\:latest
+```bash
+docker pull 060001a/g4f-stable:latest
+```
 
 ### Run the container
 
-docker run -p 8001:8001 060001a/g4f-stable\:latest
+```bash
+docker run -p 8001:8001 060001a/g4f-stable:latest
+```
 
 The API will be available at **[http://127.0.0.1:8001](http://127.0.0.1:8001)**
 
@@ -54,30 +64,34 @@ The API will be available at **[http://127.0.0.1:8001](http://127.0.0.1:8001)**
 
 ### Using `requests` (Python)
 
+```python
 import requests
 
 resp = requests.post(
-"[http://127.0.0.1:8001/v1/chat/completions](http://127.0.0.1:8001/v1/chat/completions)",
-json={
-"model": "gpt-3.5-turbo",
-"messages": \[{"role": "user", "content": "Hello!"}]
-}
+    "http://127.0.0.1:8001/v1/chat/completions",
+    json={
+        "model": "gpt-3.5-turbo",
+        "messages": [{"role": "user", "content": "Hello!"}]
+    }
 )
 
-print(resp.json()\["choices"]\[0]\["message"]\["content"])
+print(resp.json()["choices"][0]["message"]["content"])
+```
 
 ### Using OpenAI client
 
+```python
 from openai import OpenAI
 
-client = OpenAI(base\_url="[http://127.0.0.1:8001/v1](http://127.0.0.1:8001/v1)", api\_key="not-needed")
+client = OpenAI(base_url="http://127.0.0.1:8001/v1", api_key="not-needed")
 
 chat = client.chat.completions.create(
-model="gpt-3.5-turbo",
-messages=\[{"role": "user", "content": "Hello from g4f-proxy-stable!"}]
+    model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": "Hello from g4f-proxy-stable!"}]
 )
 
-print(chat.choices\[0].message.content)
+print(chat.choices[0].message.content)
+```
 
 ---
 
@@ -100,5 +114,3 @@ print(chat.choices\[0].message.content)
 * [g4f-working](https://github.com/maruf009sultan/g4f-working)
 
 ---
-
-👉 これをそのまま README に貼れば完成です！
