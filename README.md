@@ -2,6 +2,8 @@
 
 # g4f-proxy-stable
 
+<sub>[日本語](https://github.com/unlimitedai2025-byte/g4f-proxy-stable/blob/main/Readme/READMEjp.md)</sub>
+
 A completely free & unlimited local server that uses only **stable g4f models** and provides an **OpenAI-compatible API**.
 Run it directly with Python or via Docker.
 
@@ -115,3 +117,5 @@ print(chat.choices[0].message.content)
 * [g4f-working](https://github.com/maruf009sultan/g4f-working)
 
 ---
+
+リンクの出し方は「小さく表示」でもうまくいってるけど、大きく **\[日本語はこちら]** とかにしたいですか？
